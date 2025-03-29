@@ -1,2 +1,13 @@
 /vendor
 /.idea
+/.vscode
+/.DS_Store
+/node_modules
+/.env
+/.next
+/public
+/coverage
+/build
+/.nuxt
+/nuxt.config.js
+/next
