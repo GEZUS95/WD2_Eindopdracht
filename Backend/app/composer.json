@@ -1,0 +1,19 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Routers\\": "routers",
+      "Controllers\\": "Controllers",
+      "Services\\": "Services",
+      "Models\\": "Models",
+      "Repositories\\": "Repositories",
+      "Helpers\\": "Helpers",
+      "Enums\\": "Enums"
+    }
+  },
+  "require": {
+    "bramus/router": "~1.6",
+    "firebase/php-jwt": "^6.11",
+    "ext-pdo": "*",
+    "ramsey/uuid": "^4.7"
+  }
+}
