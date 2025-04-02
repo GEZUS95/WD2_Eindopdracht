@@ -116,9 +116,10 @@ class ticketRepository extends Repository
 
     public function addMessage(Message $message): void
     {
-        $stmt = $this->connection->prepare("INSERT INTO dev.ticket_message (ticket_id, user_id, message) VALUES (:ticket_id, :user_id, :message)");
+        $stmt = $this->connection->prepare("INSERT INTO dev.ticket_message (id, ticket_id, user_id, message) VALUES (:id, :ticket_id, :user_id, :message)");
+        $stmt->bindParam(':id', $message->id);
         $stmt->bindParam(':ticket_id', $message->ticket_id);
-        $stmt->bindParam(':user_id', $message->user_id);
+        $stmt->bindParam(':user_id', $message->user->id);
         $stmt->bindParam(':message', $message->message);
         $stmt->execute();
     }
@@ -128,14 +129,13 @@ class ticketRepository extends Repository
         $stmt = $this->connection->prepare("SELECT * FROM dev.ticket_message WHERE ticket_id = :ticket_id");
         $stmt->bindParam(':ticket_id', $ticket_id);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_CLASS, Message::class);
-    }
-
-    public function deleteMessage(string $id): void
-    {
-        $stmt = $this->connection->prepare("DELETE FROM dev.ticket_message WHERE id = :id");
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
+        $res = $stmt->fetchAll();
+        $messages = [];
+        foreach ($res as $row) {
+            $message = $this->getMessageObjectFromSql($row);
+            $messages[] = $message;
+        }
+        return $messages;
     }
 
     public function getUsers(string $ticket_id): array
@@ -159,6 +159,17 @@ class ticketRepository extends Repository
         $ticket->created_at = $row['created_at'];
         $ticket->updated_at = $row['updated_at'];
         return $ticket;
+    }
+
+    private function getMessageObjectFromSql(array $row): Message
+    {
+        $message = new Message();
+        $message->id = $row['id'];
+        $message->ticket_id = $row['ticket_id'];
+        $message->message = $row['message'];
+        $message->user = $this->userService->get($row['user_id']);
+        $message->created_at = $row['created_at'];
+        return $message;
     }
 
 }

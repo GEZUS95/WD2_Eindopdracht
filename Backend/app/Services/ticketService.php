@@ -60,9 +60,4 @@ class ticketService
     {
         return $this->repository->getMessages($ticket_id);
     }
-
-    public function deleteMessage(string $ticket_id)
-    {
-        $this->repository->deleteMessage($ticket_id);
-    }
 }

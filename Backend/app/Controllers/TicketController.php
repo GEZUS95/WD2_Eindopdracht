@@ -2,7 +2,9 @@
 
 namespace Controllers;
 
+use Enums\Role;
 use Helpers\Middleware;
+use Models\Message;
 use Models\Ticket;
 use Services\ticketService;
 
@@ -19,7 +21,7 @@ class TicketController extends Controller
 
     public function getAll($lim = 50, $off = 0): void
     {
-        $this->middleware->auth(\Enums\Role::User);
+        $this->middleware->auth(Role::User);
         $tickets = $this->service->getAll($lim, $off);
         if (empty($tickets)) {
             $this->respondWithError(404, "No tickets found");
@@ -30,14 +32,14 @@ class TicketController extends Controller
 
     public function get($id): void
     {
-        $this->middleware->auth(\Enums\Role::User);
+        $this->middleware->auth(Role::User);
         $ticket = $this->service->getOneById($id);
         $this->respond($ticket);
     }
 
     public function create(): void
     {
-        $this->middleware->auth(\Enums\Role::User);
+        $this->middleware->auth(Role::User);
         $user = $this->middleware->getUserFromJWT();
         $ticket = $this->createObjectFromPostedJson(Ticket::class);
         $ticket->user = $user;
@@ -47,7 +49,7 @@ class TicketController extends Controller
 
     public function update($id): void
     {
-        $this->middleware->auth(\Enums\Role::User);
+        $this->middleware->auth(Role::User);
         $post = $this->createObjectFromPostedJson(Ticket::class);
         $post->id = $id;
         $ticket = $this->service->update($post);
@@ -56,37 +58,33 @@ class TicketController extends Controller
 
     public function delete($id): void
     {
-        $this->middleware->auth(\Enums\Role::Admin);
+        $this->middleware->auth(Role::Admin);
         $this->service->delete($id);
         $this->respond("The ticket with id '$id' has been deleted");
     }
 
     public function setResolved($id): void
     {
-        $this->middleware->auth(\Enums\Role::Admin);
+        $this->middleware->auth(Role::Admin);
         $this->service->setResolved($id);
         $this->respond("The ticket with id '$id' has been resolved");
     }
 
-    public function addMessage($message): void
+    public function addMessage($id): void
     {
-        $this->middleware->auth(\Enums\Role::User);
+        $this->middleware->auth(Role::User);
+        $message = $this->createObjectFromPostedJson(Message::class);
+        $message->ticket_id = $id;
+        $message->user = $this->middleware->getUserFromJWT();
         $this->service->addMessage($message);
         $this->respond("The message has been added to the ticket");
     }
 
     public function getMessages($ticket_id): void
     {
-        $this->middleware->auth(\Enums\Role::User);
+        $this->middleware->auth(Role::User);
         $messages = $this->service->getMessages($ticket_id);
         $this->respond($messages);
-    }
-
-    public function deleteMessage($id): void
-    {
-        $this->middleware->auth(\Enums\Role::User);
-        $this->service->deleteMessage($id);
-        $this->respond("The message with id '$id' has been deleted");
     }
 
 

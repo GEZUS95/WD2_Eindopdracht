@@ -45,6 +45,11 @@ $router->get('/tickets/([a-z0-9-]+)', 'TicketController@Get');
 $router->post('/tickets', 'TicketController@Create');
 $router->put('/tickets/([a-z0-9-]+)', 'TicketController@Update');
 $router->delete('/tickets/([a-z0-9-]+)', 'TicketController@Delete');
+$router->post('/tickets/([a-z0-9-]+)/resolved', 'TicketController@setResolved');
+
+// messages
+$router->post('/tickets/([a-z0-9-]+)/reply', 'TicketController@addMessage');
+$router->get('/tickets/([a-z0-9-]+)/messages', 'TicketController@getMessages');
 
 
 // Run it!
