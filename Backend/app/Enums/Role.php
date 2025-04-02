@@ -2,7 +2,7 @@
 
 namespace Enums;
 
-enum Role
+enum Role implements \JsonSerializable
 {
     case Admin;
     case User;
@@ -27,5 +27,14 @@ enum Role
         };
     }
 
+
+    public function jsonSerialize(): string
+    {
+        return match ($this) {
+            self::Admin => 'Admin',
+            self::User => 'User',
+            self::Support_Agent => 'Support_Agent',
+        };
+    }
 
 }

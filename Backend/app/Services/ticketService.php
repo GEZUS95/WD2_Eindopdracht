@@ -37,7 +37,7 @@ class ticketService
 
     public function update(Ticket $ticket)
     {
-        return $this->repository->updateTicket($ticket);
+        return $this->repository->update($ticket);
     }
 
     public function delete(string $id)

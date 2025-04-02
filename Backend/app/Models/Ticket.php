@@ -6,22 +6,23 @@ use Enums\Priority;
 use Enums\Status;
 use JsonSerializable;
 
-class Ticket implements jsonSerializable
+class Ticket implements JsonSerializable
 {
     public string $id;
     public string $title;
     public string $description;
-    public array $attachments; // table ticket_attachment
+    public ?array $attachments = null; // table ticket_attachment
     public Status $status;
     public Priority $priority;
 
     public User $user;
     public array $assigned_to; // table ticket_user
-    public string $resolved_at;
+    public ?string $resolved_at = null;
+
     public string $created_at;
     public string $updated_at;
 
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): array
     {
         return [
             'id' => $this->id,

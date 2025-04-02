@@ -21,6 +21,10 @@ class TicketController extends Controller
     {
         $this->middleware->auth(\Enums\Role::User);
         $tickets = $this->service->getAll($lim, $off);
+        if (empty($tickets)) {
+            $this->respondWithError(404, "No tickets found");
+            return;
+        }
         $this->respond($tickets);
     }
 
@@ -41,10 +45,12 @@ class TicketController extends Controller
         $this->respond($res);
     }
 
-    public function update($ticket): void
+    public function update($id): void
     {
         $this->middleware->auth(\Enums\Role::User);
-        $ticket = $this->service->update($ticket);
+        $post = $this->createObjectFromPostedJson(Ticket::class);
+        $post->id = $id;
+        $ticket = $this->service->update($post);
         $this->respond($ticket);
     }
 

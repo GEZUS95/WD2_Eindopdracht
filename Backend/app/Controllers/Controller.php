@@ -29,7 +29,7 @@ class Controller
         $json = file_get_contents('php://input');
         $data = json_decode($json);
         // Maak dynamisch een object aan van de klasse
-        $object = new $className(); 
+        $object = new $className();
         foreach ($data as $key => $value) {
             if (is_object($value)) {
                 continue;
@@ -38,6 +38,19 @@ class Controller
                 $object->{$key} = new \DateTime($value);
             } elseif ($key === 'role' && !empty($value)) {
                 $object->{$key} = Role::from($value);
+            } elseif ($key === 'status' && !empty($value)) {
+                $object->{$key} = \Enums\Status::from($value);
+            } elseif ($key === 'priority' && !empty($value)) {
+                $object->{$key} = \Enums\Priority::from($value);
+            } elseif ($key === 'user' && !empty($value)) {
+                $object->{$key} = new \Models\User();
+                foreach ($value as $subKey => $subValue) {
+                    if ($subKey === 'role') {
+                        $object->{$key}->{$subKey} = Role::from($subValue);
+                    } else {
+                        $object->{$key}->{$subKey} = $subValue;
+                    }
+                }
             } else {
                 $object->{$key} = $value;
             }

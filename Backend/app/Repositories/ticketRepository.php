@@ -2,6 +2,8 @@
 
 namespace Repositories;
 
+use Enums\Priority;
+use Enums\Status;
 use Models\Message;
 use Models\Ticket;
 use Models\User;
@@ -19,11 +21,19 @@ class ticketRepository extends Repository
 
     public function getAll(int $lim, int $off)
     {
-        $stmt = $this->connection->prepare(" SELECT t.*, u.username, u.email FROM dev.tickets t JOIN dev.users u ON t.user_id = u.id ORDER BY created_at DESC LIMIT :lim OFFSET :off");
+        $stmt = $this->connection->prepare(" SELECT * FROM dev.tickets LIMIT :lim OFFSET :off");
         $stmt->bindParam(':lim', $lim, \PDO::PARAM_INT);
         $stmt->bindParam(':off', $off, \PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_CLASS, Ticket::class);
+        $rows = $stmt->fetchAll();
+
+        $tickets = [];
+        foreach ($rows as $row) {
+            $ticket = $this->getObjectFromSql($row);
+            $tickets[] = $ticket;
+        }
+
+        return $tickets;
     }
 
     public function getOneById(string $id)
@@ -32,21 +42,10 @@ class ticketRepository extends Repository
         $stmt->bindParam(':id', $id);
         $stmt->execute();
         $data = $stmt->fetch();
-        if ($data) {
-            $ticket = new Ticket();
-            $ticket->id = $data['id'];
-            $ticket->title = $data['title'];
-            $ticket->description = $data['description'];
-            $ticket->status = $data['status'];
-            $ticket->priority = $data['priority'];
-            $ticket->user = $this->userService->get($data['user_id']);
-            $ticket->assigned_to = $this->getUsers($data['id']);
-            $ticket->resolved_at = $data['resolved_at'];
-            $ticket->created_at = $data['created_at'];
-            $ticket->updated_at = $data['updated_at'];
-            return $ticket;
+        if (!$data) {
+            return null;
         }
-        return null;
+        return $this->getObjectFromSql($data);
     }
 
     public function create(Ticket $ticket)
@@ -60,8 +59,8 @@ class ticketRepository extends Repository
             $stmt->bindParam(':status', $stat);
             $stmt->bindParam(':user_id', $ticket->user->id);
             $stmt->execute();
-            
-            if (!empty($ticket->assigned_to)) {  
+
+            if (!empty($ticket->assigned_to)) {
                 foreach ($ticket->assigned_to as $u) {
                     $stmt = $this->connection->prepare("INSERT INTO dev.ticket_user (ticket_id, user_id) VALUES (:ticket_id, :user_id)");
                     $stmt->bindParam(':ticket_id', $insertedTicket->id);
@@ -77,14 +76,12 @@ class ticketRepository extends Repository
 
     public function update(Ticket $ticket)
     {
-        $stmt = $this->connection->prepare("UPDATE dev.tickets SET title = :title, description = :description, status = :status, user_id = :user_id WHERE id = :id");
-        $stmt->bindParam(':title', $ticket->title);
-        $stmt->bindParam(':description', $ticket->description);
-        $stmt->bindParam(':status', $ticket->status);
-        $stmt->bindParam(':user_id', $ticket->user->id);
+        $stmt = $this->connection->prepare("UPDATE dev.tickets SET status = :status, priority = :priority WHERE id = :id");
+        $status = $ticket->status->toString();
+        $prio = $ticket->priority->toString();
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':priority', $prio);
         $stmt->bindParam(':id', $ticket->id);
-        $stmt->bindParam(':updated_at', $ticket->updated_at);
-        $stmt->bindParam(':assigned', $ticket->assigned_to); // need multiple users
 
         $stmt->execute();
 
@@ -147,6 +144,21 @@ class ticketRepository extends Repository
         $stmt->bindParam(':ticket_id', $ticket_id);
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_CLASS, User::class);
+    }
+
+    private function getObjectFromSql(array $row): Ticket
+    {
+        $ticket = new Ticket();
+        $ticket->id = $row['id'];
+        $ticket->title = $row['title'];
+        $ticket->description = $row['description'];
+        $ticket->status = Status::from($row['status']);
+        $ticket->priority = Priority::from($row['priority']);
+        $ticket->user = $this->userService->get($row['user_id']);
+        $ticket->assigned_to = $this->getUsers($row['id']);
+        $ticket->created_at = $row['created_at'];
+        $ticket->updated_at = $row['updated_at'];
+        return $ticket;
     }
 
 }

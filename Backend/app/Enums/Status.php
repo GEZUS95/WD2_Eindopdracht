@@ -2,14 +2,14 @@
 
 namespace Enums;
 
-enum Status
+enum Status implements \JsonSerializable
 {
     case Closed;
     case Open;
     case Reopened;
     case Unassigned;
 
-    public function toString()
+    public function toString(): string
     {
         return match ($this) {
             Status::Closed => "Closed",
@@ -27,6 +27,16 @@ enum Status
             'Reopened' => self::Reopened,
             'Unassigned' => self::Unassigned,
             default => throw new \InvalidArgumentException("Invalid status: $value"),
+        };
+    }
+
+    public function jsonSerialize(): string
+    {
+        return match ($this) {
+            self::Closed => "Closed",
+            self::Open => "Open",
+            self::Reopened => "Reopened",
+            self::Unassigned => "Unassigned"
         };
     }
 }
