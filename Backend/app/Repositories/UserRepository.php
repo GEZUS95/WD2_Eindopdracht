@@ -3,6 +3,7 @@
 namespace Repositories;
 
 use Enums\Role;
+use Models\User;
 use PDO;
 use PDOException;
 
@@ -50,7 +51,7 @@ class UserRepository extends Repository
     public function getUserById($id)
     {
         try {
-            $stmt = $this->connection->prepare("SELECT id, username, email, role, birthday, created_at, updated_at, token FROM dev.users WHERE id = :id");
+            $stmt = $this->connection->prepare("SELECT id, username, email, role, birthday, created_at, updated_at FROM dev.users WHERE id = :id");
             $stmt->bindParam(':id', $id);
             $stmt->execute();
             $obj = $stmt->fetch();
@@ -201,9 +202,9 @@ class UserRepository extends Repository
         $stmt->execute();
     }
 
-    public function getUserObj(mixed $user): \Models\User
+    public function getUserObj(mixed $user): User
     {
-        $userObj = new \Models\User();
+        $userObj = new User();
         $userObj->id = $user['id'];
         $userObj->username = $user['username'];
         $userObj->email = $user['email'];
@@ -211,7 +212,6 @@ class UserRepository extends Repository
         $userObj->birthday = new \DateTime($user['birthday']);
         $userObj->created_at = new \DateTime($user['created_at']);
         $userObj->updated_at = new \DateTime($user['updated_at']);
-        $userObj->token = $user['token'];
         return $userObj;
     }
 

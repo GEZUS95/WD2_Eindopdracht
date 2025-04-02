@@ -6,7 +6,7 @@ use Enums\Priority;
 use Enums\Status;
 use Models\Message;
 use Models\Ticket;
-use Models\User;
+use PDO;
 use Services\UserService;
 
 class ticketRepository extends Repository
@@ -22,8 +22,8 @@ class ticketRepository extends Repository
     public function getAll(int $lim, int $off)
     {
         $stmt = $this->connection->prepare(" SELECT * FROM dev.tickets LIMIT :lim OFFSET :off");
-        $stmt->bindParam(':lim', $lim, \PDO::PARAM_INT);
-        $stmt->bindParam(':off', $off, \PDO::PARAM_INT);
+        $stmt->bindParam(':lim', $lim, PDO::PARAM_INT);
+        $stmt->bindParam(':off', $off, PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll();
 
@@ -63,7 +63,7 @@ class ticketRepository extends Repository
             if (!empty($ticket->assigned_to)) {
                 foreach ($ticket->assigned_to as $u) {
                     $stmt = $this->connection->prepare("INSERT INTO dev.ticket_user (ticket_id, user_id) VALUES (:ticket_id, :user_id)");
-                    $stmt->bindParam(':ticket_id', $insertedTicket->id);
+                    $stmt->bindParam(':ticket_id', $ticket->id);
                     $stmt->bindParam(':user_id', $u->id);
                     $stmt->execute();
                 }
@@ -140,10 +140,16 @@ class ticketRepository extends Repository
 
     public function getUsers(string $ticket_id): array
     {
-        $stmt = $this->connection->prepare("SELECT u.* FROM dev.ticket_user tu JOIN dev.users u ON tu.user_id = u.id WHERE tu.ticket_id = :ticket_id");
+        $stmt = $this->connection->prepare("SELECT * FROM dev.ticket_user WHERE ticket_id = :ticket_id");
         $stmt->bindParam(':ticket_id', $ticket_id);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_CLASS, User::class);
+        $res = $stmt->fetchAll();
+        $users = [];
+        foreach ($res as $row) {
+            $user = $this->userService->get($row['user_id']);
+            $users[] = $user;
+        }
+        return $users;
     }
 
     private function getObjectFromSql(array $row): Ticket

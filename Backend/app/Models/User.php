@@ -15,7 +15,7 @@ class User implements JsonSerializable
     public \DateTime $birthday;
     public \DateTime $created_at;
     public \DateTime $updated_at;
-    public string $token;
+    public ?string $token = null;
 
     public function setRole($role): void
     {
@@ -32,7 +32,6 @@ class User implements JsonSerializable
             'birthday' => $this->birthday->format('Y-m-d'),
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
-            'token' => $this->token,
         ];
     }
 }
