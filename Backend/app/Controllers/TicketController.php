@@ -21,7 +21,7 @@ class TicketController extends Controller
 
     public function getAll($lim = 50, $off = 0): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $tickets = $this->service->getAll($lim, $off);
         if (empty($tickets)) {
             $this->respondWithError(404, "No tickets found");
@@ -32,14 +32,14 @@ class TicketController extends Controller
 
     public function get($id): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $ticket = $this->service->getOneById($id);
         $this->respond($ticket);
     }
 
     public function create(): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $user = $this->middleware->getUserFromJWT();
         $ticket = $this->createObjectFromPostedJson(Ticket::class);
         $ticket->user = $user;
@@ -49,7 +49,7 @@ class TicketController extends Controller
 
     public function update($id): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::Support_Agent, Role::Admin]);
         $post = $this->createObjectFromPostedJson(Ticket::class);
         $post->id = $id;
         $ticket = $this->service->update($post);
@@ -58,21 +58,21 @@ class TicketController extends Controller
 
     public function delete($id): void
     {
-        $this->middleware->auth(Role::Admin);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $this->service->delete($id);
         $this->respond("The ticket with id '$id' has been deleted");
     }
 
     public function setResolved($id): void
     {
-        $this->middleware->auth(Role::Admin);
+        $this->middleware->auth([Role::Support_Agent, Role::Admin]);
         $this->service->setResolved($id);
         $this->respond("The ticket with id '$id' has been resolved");
     }
 
     public function addMessage($id): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $message = $this->createObjectFromPostedJson(Message::class);
         $message->ticket_id = $id;
         $message->user = $this->middleware->getUserFromJWT();
@@ -82,7 +82,7 @@ class TicketController extends Controller
 
     public function getMessages($ticket_id): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $messages = $this->service->getMessages($ticket_id);
         $this->respond($messages);
     }

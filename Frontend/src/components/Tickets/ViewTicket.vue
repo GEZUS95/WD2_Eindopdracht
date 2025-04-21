@@ -1,12 +1,12 @@
 <template>
-  <div class="edit-ticket">
+  <div class="view-ticket">
     <div v-if="error" class="alert alert-danger" role="alert">
           {{ error }}
     </div>
     <div v-if="isLoading" class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
+      <span class="visually-hidden">Loading ticket...</span>
     </div>
-    <h1>Edit Ticket</h1>
+    <h1>Ticket</h1>
     <form @submit.prevent="handleSubmit">
       <div>
         <label for="title">Title:</label>
@@ -18,7 +18,7 @@
       </div>
       <div>
         <label for="status">Status:</label>
-        <select id="status" v-model="form.status" required>
+        <select id="status" v-model="form.status" required disabled>
           <option value="Open">Open</option>
           <option value="Closed">Closed</option>
           <option value="Unassigned">Unassigned</option>
@@ -27,28 +27,38 @@
       </div>
       <div>
         <label for="priority">Priority:</label>
-        <select id="priority" v-model="form.priority" required>
+        <select id="priority" v-model="form.priority" required disabled>
           <option value="Low">Low</option>
           <option value="Medium">Medium</option>
           <option value="High">High</option>
           <option value="Urgent">Urgent</option>
         </select>
       </div>
-      <div>
-        <label for="assigned_to">Assigned To:</label>
-        <select id="assigned_to" v-model="form.assigned_to" multiple>
-          <option
-            v-for="user in users"
-            :key="user.id"
-            :value="user.id"
-          >
-            {{ user.username }}
-          </option>
-        </select>
-      </div>
-      <button type="submit">Update Ticket</button>
     </form>
   </div>
+  <div class="messages">
+    <h2>Messages</h2>
+    <div v-if="isLoadingMessages" class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading messages...</span>
+    </div>
+    <form @submit.prevent="handleSubmit">
+      <div>
+        <label for="message">Message:</label>
+        <input id="message" v-model="formMessage.message" type="text" required />
+      </div>
+      <button type="submit">Send Message</button>
+    </form>
+    <ul>
+      <li v-for="message in messages" :key="message.id" class="card mb-3 border-primary message">
+        <div class="card-body">
+          <p class="card-text">{{ message.message }}</p>
+          <p class="card-text">
+        <small class="text-muted">By: {{ message.user.username }} on {{ message.created_at }}</small>
+          </p>
+        </div>
+      </li>
+    </ul>
+    </div>
 </template>
 
 <script setup>
@@ -57,57 +67,50 @@ import { useRouter } from 'vue-router';
 import axios from '../../axios-auth';
 
 const router = useRouter();
-const error = ref(null)
-const isLoading = ref(false)
+const ticket = ref(null);
+const messages = ref([]);
+const error = ref(null);
+const isLoading = ref(false);
+const isLoadingMessages = ref(false);
 
 const form = reactive({
   title: '',
   description: '',
   status: 'Open',
   priority: 'Low',
-  assigned_to: [],
 });
 
-const users = ref([]);
-
-async function loadUsers() {
-  try {
-    const response = await axios.get('/users'); // Fetch users from the API
-    users.value = response.data;
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    error.value = 'Error fetching users: ' + error.message;
-  }
-}
+const formMessage = reactive({
+  message: '',
+});
 
 async function handleSubmit() {
   try {
     const ticketId = router.currentRoute.value.params.id; // Get the ticket ID from the URL
-    await axios.put(`/tickets/${ticketId}`, {
-      status: form.status,
-      priority: form.priority,
-      assigned_to: form.assigned_to.map(id => ({ id })),
+    await axios.post(`/tickets/${ticketId}/reply`, {
+     message: formMessage.message,
     });
-    console.log('Ticket updated successfully');
-    router.push('/tickets'); // Redirect to tickets list
+    console.log('Message successfully sent');
+    loadMessages(); // Reload messages after sending a new one
+    formMessage.message = ''; // Clear the message input
   } catch (error) {
-    console.error('Error updating ticket:', error);
-    error.value = 'Error updating ticket: ' + error.message;
+    console.error('Error sending message:', error);
+    error.value = 'Error sending message: ' + error.message;
   }
 }
 
 async function loadTicket(){
-  const ticketId = router.currentRoute.value.params.id; // Get the ticket ID from the URL
   isLoading.value = true
   try {
+    const ticketId = router.currentRoute.value.params.id; // Get the ticket ID from the URL
     const response = await axios.get(`/tickets/${ticketId}`);
-    const tick = response.data;
-    form.title = tick.title;
-    form.description = tick.description;
-    form.status = tick.status;
-    form.priority = tick.priority;
-    form.assigned_to = tick.assigned_to.map(u => u.id);
-    console.log('Ticket loaded:', form);
+    ticket.value = response.data;
+
+    form.title = ticket.value.title;
+    form.description = ticket.value.description;
+    form.status = ticket.value.status;
+    form.priority = ticket.value.priority;
+
   } catch (error) {
     console.error('Error fetching ticket:', error);
     error.value = 'Error fetching ticket: ' + error.message;
@@ -116,16 +119,35 @@ async function loadTicket(){
   }
 }
 
+async function loadMessages() {
+  isLoadingMessages.value = true
+  try {
+    const ticketId = router.currentRoute.value.params.id; // Get the ticket ID from the URL
+    const response = await axios.get(`/tickets/${ticketId}/messages`);
+    messages.value = response.data;
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    error.value = 'Error fetching messages: ' + error.message;
+  } finally {
+    isLoadingMessages.value = false
+  }
+}
+
 onMounted(() => {
   loadTicket();
-  loadUsers();
+  loadMessages();
 });
+
 </script>
 
 <style scoped>
 .edit-ticket {
   max-width: 600px;
   margin: 0 auto;
+}
+
+.message {
+  margin: 10px;
 }
 
 form div {
@@ -158,11 +180,11 @@ button {
 button:hover {
   background-color: #0056b3;
 }
-
+/*
 #title,
 #description {
   background-color: #f8f9fa;
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
-}
+} */
 </style>

@@ -2,7 +2,7 @@
 
 namespace Helpers;
 
-use Enums\Role;
+use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Models\User;
@@ -17,14 +17,14 @@ class Middleware
         $this->userService = new UserService();
     }
 
-    public function auth(Role $role): bool
+    public function auth(array $roles): bool
     {
         $jwt = explode(' ', $_SERVER['HTTP_AUTHORIZATION'])[1];
         $decodedJWT = $this->decodeJWT($jwt);
         $user = $this->userService->GetUserByEmail($decodedJWT->data->email);
-
-        if ($user->role != $role) {
-            return false;
+        if (!in_array($user->role, $roles)) {
+            $this->respondWithCode(401, "Unauthorized");
+            die();
         }
         return true;
     }
@@ -44,6 +44,7 @@ class Middleware
                 "id" => $user->id,
                 "username" => $user->username,
                 "email" => $user->email,
+                "role" => $user->role->toString(),
             )
         );
         $jwt = JWT::encode($payload, $key, 'HS256');
@@ -53,6 +54,7 @@ class Middleware
             'token' => $jwt,
             'username' => $user->username,
             'email' => $user->email,
+            'role' => $user->role->toString(),
             'expireAt' => $expireTime
         );
     }
@@ -60,7 +62,16 @@ class Middleware
     public function decodeJWT(string $jwt): object
     {
         $key = "login_key_ticketinator";
-        return JWT::decode($jwt, new Key($key, 'HS256'));
+        try {
+            $decoded = JWT::decode($jwt, new Key($key, 'HS256'));
+        } catch (ExpiredException $e) {
+            $this->respondWithCode(401, $e->getMessage());
+            die();
+        } catch (\Exception $e) {
+            $this->respondWithCode(500, $e->getMessage());
+            die();
+        }
+        return $decoded;
     }
 
     public function getUserFromJWT(): User
@@ -68,6 +79,13 @@ class Middleware
         $jwt = explode(' ', $_SERVER['HTTP_AUTHORIZATION'])[1];
         $decodedJWT = $this->decodeJWT($jwt);
         return $this->userService->GetUserByEmail($decodedJWT->data->email);
+    }
+
+    private function respondWithCode($httpcode, $data)
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($httpcode);
+        echo json_encode($data);
     }
 }
 

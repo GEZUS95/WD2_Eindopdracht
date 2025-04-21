@@ -1,35 +1,17 @@
-# Frontend
+# Ticketnator Frontend 
 
-This template should help get you started developing with Vue 3 in Vite.
+### Overview
+Ticketnator Frontend is a tool for managing tickets, connecting seamlessly to the backend.
 
-## Recommended IDE Setup
+### Getting Started
+1. Clone the repo.
+2. Run `npm install` and `npm run dev`.
+3. Visit `http://localhost:3000`.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+### Troubleshooting
+Ensure the backend is running!
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+### Users - Passwords
+- Admin: Admin
+- User: User
+- SupportAgent: SupportAgent

@@ -21,14 +21,14 @@ class UserController extends Controller
 
     public function GetAll($lim = 50, $off = 0): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::Support_Agent, Role::Admin]);
         $users = $this->service->getAll($lim, $off);
         $this->respond($users);
     }
 
     public function Get($id): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $user = $this->service->Get($id);
         if ($user) {
             $this->respond($user);
@@ -39,7 +39,7 @@ class UserController extends Controller
 
     public function Create()
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::Support_Agent, Role::Admin]);
         $data = $this->createObjectFromPostedJson(User::class);
         $user = $this->service->create($data);
         if ($user == null) {
@@ -51,23 +51,24 @@ class UserController extends Controller
 
     public function Update($id): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $data = $this->createObjectFromPostedJson(User::class);
         $data->id = $id;
         $user = $this->service->update($data);
         $this->respond($user);
     }
 
-    public function UpdatePassword($user): void
+    public function UpdatePassword(): void
     {
-        $this->middleware->auth(Role::User);
-        $user = $this->service->updatePassword($user);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
+        $data = $this->createObjectFromPostedJson(User::class);
+        $user = $this->service->updatePassword($data);
         $this->respond($user);
     }
 
     public function Delete($id): void
     {
-        $this->middleware->auth(Role::User);
+        $this->middleware->auth([Role::User, Role::Support_Agent, Role::Admin]);
         $this->service->delete($id);
         $this->respond("The user with id '$id' has been deleted");
     }

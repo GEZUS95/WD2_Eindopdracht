@@ -7,11 +7,11 @@
     <form @submit.prevent="submitTicket">
       <div>
         <label for="title">Title:</label>
-        <input type="text" id="title" v-model="title" required />
+        <input type="text" id="title" v-model="form.title" required />
       </div>
       <div>
         <label for="description">Description:</label>
-        <textarea id="description" v-model="description" required></textarea>
+        <textarea id="description" v-model="form.description" required></textarea>
       </div>
       <div>
         <label for="status">Status:</label>
